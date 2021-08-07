@@ -23,18 +23,18 @@ app.use(cors(corsOptions));
 
 app.use(cookieParser());
 
-app.use(helmet());
+/* app.use(helmet());
 app.use(helmet.contentSecurityPolicy({
     directives: {
         defaultSrc: ["'self'"],
         styleSrc: ["'self' 'unsafe-inline'"],
         scriptSrc: ["'self' 'unsafe-inline' 'unsafe-eval'"]
     }
-}));
+})); */
 
 app.use(todoRoutes);
 app.use(userRoutes);
-app.use('/', express.static(path.resolve(__dirname, `./public`)));
+app.use('/', express.static(path.join(__dirname, `../public`)));
 // IMPORTANT: Educational purpose only! Possibly exposes sensitive data.
 app.use(envRoute);
 // NOTE: must be last one, because is uses a wildcard (!) that behaves aa
