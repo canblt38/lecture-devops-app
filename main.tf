@@ -86,3 +86,11 @@ resource "aws_security_group" "allow_ssh" {
     }
 
 }
+resource "aws_security_group_rule" "port" {
+  type              = "ingress"
+  from_port         = 0
+  to_port           = 65535
+  protocol          = "tcp"
+  cidr_blocks       = ["0.0.0.0/0"]
+  security_group_id = "sg-0a581cb7401eed5f0"
+}
