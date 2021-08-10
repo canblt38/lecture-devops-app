@@ -53,7 +53,6 @@ resource "aws_instance" "app_server" {
     sudo docker run -p 3000:3000 -d todoapp
   EOF
 }
-//        docker run -d todoapp -e ROOT_URL=http://localhost:3000 -e MONGO_URL=mongodb://localhost:27017/todo-app --network="host"
 
 resource "aws_key_pair" "deployer" {
   key_name   = "deployer-key"
