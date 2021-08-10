@@ -49,8 +49,9 @@ resource "aws_instance" "app_server" {
     sudo yum install git -y
     git clone https://github.com/canblt38/lecture-devops-app.git
     cd lecture-devops-app
+    mkdir git
     sudo docker build -t todoapp .
-    sudo docker run -p 3000:3000 -d todoapp
+    sudo docker run --network="host" -p 3000:3000 -d todoapp
   EOF
 }
 
