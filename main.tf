@@ -11,47 +11,48 @@ terraform {
       source  = "hashicorp/aws"
       version = "~> 3.27"
     }
-/*     docker = {
-      source  = "kreuzwerker/docker"
-      version = "2.14.0"
-    } */
-
   }
 
   required_version = ">= 0.15.1"
 }
 
-/* provider "docker" {
-  host = "unix:///var/run/docker.sock"
-}
-
-# Pulls the image
-resource "docker_image" "mongo" {
-  name = "mongo:latest"
-}
-
-# Create a container
-resource "docker_container" "foo" {
-  image = docker_image.mongo.latest
-  name  = "foo"
-} */
-
 provider "aws" {
   region  = "us-east-1"
-    access_key = "ASIAYUOZXJF4YC7S4MLF"
-    secret_key = "o1Uqtu/Ogg+mDTljLX8oeOEQFIJ15VwdkKFoACka"
-    token = "FwoGZXIvYXdzEGwaDGspxeNk6hy3mwUOJyLKAS1F2wdLGTrz0TeuuOcmRb/RCNg2uRg4xZnxJ08TtwgobTmpU8MQ2OKJwCg3YDadLc561lGS5hZq9fLnGz1S0zQYX7uOdGVSEOPqg8k0kexEVSClTBdhc8O4HM3kAeC3F259CwgE3mX3L+gff6CFxnBX+LYqs4NsM1NgkJaPkqauIKsEauITbzEfeiBy09iktRgHD+xHZ4Z7XC3hteUtmz+mXDX/oClmFF+igiycv2TmegM8xFr6vDCKrXWCD+uT5DIWeB/xvNHA6dIovsO5iAYyLa77xg8gGrfgREY764Hvtbx+Q+/fuaF+whEksge81pHduGt01aiR4Z3XzGoWiw=="
+    access_key = "ASIAYUOZXJF4S6XG3BP2"
+    secret_key = "vJ6D1DO6g1FHl4pWXiFbamOGkkTjWdkQvvGxN2um"
+    token = "FwoGZXIvYXdzELH//////////wEaDMoit1TwxBoItb5rCyLKAcX6rTI1kMZLOFvK0Z2+bZDysotJ90tBrCOIIe0VXZnIsUBhrQr91jTvsHFIp17SkB0saNFC6iqi17OMpD8bxGD6ER8hAJf4DGh1LIq7qMBSDqUqcHE1Cq1XdMGZnzCSOB/UAIPPDsdI3OzW8Hvb9CtBL7O+yClsR9ol7CHmAAsjOqF3iJCR0My7nIiFx1l5QlJMCBR9ZYYGF4HBkFQl96ufBJFt34fvj79cJ9uAVxU4CIchKMYA9tOKR/ILXogLjCmBpmKENtuiX1go0NTIiAYyLUPHPGYuJEPzYKj+yUSqGCwmcRSvbKVNNOzQPp/ExmV6Tgk1zCCmOjs/nmlKVw=="
 }
 
 resource "aws_instance" "app_server" {
     key_name   = aws_key_pair.deployer.key_name
     security_groups   = [aws_security_group.allow_ssh.name]
-    ami           = "ami-0db6c6238a40c0681"
+    ami           = "ami-0c2b8ca1dad447f8a"
     instance_type = "t2.micro"
 
   tags = {
     Name = "ExampleAppServerInstance"
   }
+
+   user_data = <<-EOF
+    #!/bin/bash
+    set -ex
+    sudo yum update -y
+    sudo yum install docker -y
+    sudo service docker start
+    sudo usermod -a -G docker ec2-user
+    cd /etc/yum.repos.d/
+    sudo bash -c "echo -e \"[mongodb-org-5.0]\nname=MongoDB Repository\nbaseurl=https://repo.mongodb.org/yum/amazon/2/mongodb-org/5.0/x86_64/\ngpgcheck=1\nenabled=1\ngpgkey=https://www.mongodb.org/static/pgp/server-5.0.asc\" >> mongodb-org-5.0.repo"
+    sudo yum install -y mongodb-org
+    sudo systemctl start mongod
+    sudo systemctl daemon-reload
+    sudo systemctl status mongod
+    sudo yum install git -y
+    mkdir git
+    git clone https://github.com/canblt38/lecture-devops-app.git
+    cd lecture-devops-app
+    docker build -t todoapp .
+    docker run -p 3000:3000 -d todoapp
+  EOF
 }
 
 resource "aws_key_pair" "deployer" {
@@ -75,4 +76,13 @@ resource "aws_security_group" "allow_ssh" {
     protocol         = "tcp"
     cidr_blocks      = ["0.0.0.0/0"]
   }
+
+  egress {
+      from_port        = 0
+      to_port          = 0
+      protocol         = "-1"
+      cidr_blocks      = ["0.0.0.0/0"]
+      ipv6_cidr_blocks = ["::/0"]
+    }
+
 }
