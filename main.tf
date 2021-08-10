@@ -49,8 +49,8 @@ resource "aws_instance" "app_server" {
     sudo yum install git -y
     git clone https://github.com/canblt38/lecture-devops-app.git
     cd lecture-devops-app
-    docker build -t todoapp .
-    docker run -p 3000:3000 -d todoapp --network="host"
+    sudo docker build -t todoapp .
+    sudo docker run -p 3000:3000 -d todoapp
   EOF
 }
 //        docker run -d todoapp -e ROOT_URL=http://localhost:3000 -e MONGO_URL=mongodb://localhost:27017/todo-app --network="host"
