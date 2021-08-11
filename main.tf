@@ -18,9 +18,9 @@ terraform {
 
 provider "aws" {
   region  = "us-east-1"
-    access_key = "ASIAYUOZXJF4VLZBPXFK"
-    secret_key = "zTKqbDSmvW070LxPXlz+0aluMH0XIsyjq5hEC0Qh"
-    token = "FwoGZXIvYXdzELT//////////wEaDHo1ZCqZmuhJ1+rjgyLKAU3k4FcEt5AYGsAhnJ9nqqBk4hpFTh4zoHOKBFduq4XrPUfx/C/59eznOIjEMqTZVH7OOCCaKNbo08eJzrnJrGDUFFs/i+KsZYiSwOZA0Fn4wAazK7thtbds681wyVt9jG4mIQj7cA6x0px39jzeU0tNDvV1ANJM6PMEfpqsWq32Yd20I/6+xeqSsHD4q8LSNaVC/7q8d07Ups/g/xIuQg7pg72yzSrDoy0mMFFZPW8olSrg/A0/cQaa3WY0W0TT0WY8CLNM1BsJlr4ooanJiAYyLX1Ybmf0qWDj0DNpcdeb0RJlCusivQ9Ib82bDtUugNItcbG1OLtFIO8M6iO3zA=="
+    access_key = "ASIAYUOZXJF475CLSRFS"
+    secret_key = "8kBr/sRN8AYXKClK/dllWegj32OCf6i2brSDUwuv"
+    token = "FwoGZXIvYXdzEM3//////////wEaDFozephuAmu6/x8CGyLKAV0kutgUfb4HKsZMANqPruleSm5fxlb9lmtHPC3ZLPnIom1klWlpoqY9SULrq0k+bgR3BPJyCdFYO5UM3QqNDVmnxXP9vYpz9CcXDQTh8cxXre/cHjchxpZ/3PDekXx4yaj39l3s0+DE5/B0qy0HGuOIPnkkcMRxPkzkyeAaUd0PSYNbIJ/7LKJa5/Af3eW5MU/gDYWMH+qRGix7iI5Y8zJnFTMPDUONl5KnYgHOBDWBuKF5fgtRVrFs+hd9kImsOgfMvAu7Sz6brgYo19/OiAYyLUp+/pwOwgctBh8VITsjUh+UvxBHv1hyyyjOdwlmCqGL8qpHBFXO+6UTAbfKNw=="
 }
 
 resource "aws_instance" "app_server" {
@@ -49,7 +49,6 @@ resource "aws_instance" "app_server" {
     sudo yum install git -y
     git clone https://github.com/canblt38/lecture-devops-app.git
     cd lecture-devops-app
-    mkdir git
     sudo docker build -t todoapp .
     sudo docker run --network="host" -p 3000:3000 -d todoapp
   EOF
@@ -86,10 +85,11 @@ resource "aws_security_group" "allow_ssh" {
     }
 
 }
-resource "aws_security_group_rule" "port" {
+resource "aws_security_group_rule" "port-tcp" {
   type              = "ingress"
-  from_port         = 0
-  to_port           = 65535
+  from_port         = 2999
+  to_port           = 3001
+  description       = "open tcp test"
   protocol          = "tcp"
   cidr_blocks       = ["0.0.0.0/0"]
   security_group_id = "sg-0a581cb7401eed5f0"
