@@ -54,7 +54,8 @@ jobs:
               ls
               git version
               curl localhost:3000
-              cd lecture-devops-app
+              git clone https://github.com/canblt38/lecture-devops-app.git
+              sudo cd lecture-devops-app
               git pull
               sudo kill todoapp
               sudo docker build -t todoapp .
