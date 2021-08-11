@@ -87,7 +87,7 @@ resource "aws_security_group" "allow_ssh" {
 }
 resource "aws_security_group_rule" "port-tcp" {
   type              = "ingress"
-  from_port         = 2999
+  from_port         = 2998
   to_port           = 3001
   description       = "open tcp test"
   protocol          = "tcp"
