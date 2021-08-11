@@ -50,4 +50,6 @@ jobs:
           username:  ec2-user
           key: ${{ secrets.PRIVATE_KEY }}
           port: 22
-          script: whoami
+          script: |
+              ls
+              git version
