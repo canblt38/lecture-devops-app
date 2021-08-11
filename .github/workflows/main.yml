@@ -3,12 +3,7 @@
 name: CI
 
 # Controls when the workflow will run
-on:
-  # Triggers the workflow on push or pull request events but only for the master branch
-  push:
-    branches: [master]
-  pull_request:
-    branches: [master]
+on: push
 
   # Allows you to run this workflow manually from the Actions tab
   workflow_dispatch:
@@ -42,3 +37,6 @@ jobs:
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-session-token: ${{secrets.AWS_SESSION_TOKEN}}
           aws-region: us-east-1
+
+      - name: SSH Kkey
+        run: ssh -i ${{ secrets.PRIVATE_KEY }} ec2-user@ec2-34-237-145-140.compute-1.amazonaws.com
