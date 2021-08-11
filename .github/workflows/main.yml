@@ -43,6 +43,11 @@ jobs:
           aws-session-token: ${{secrets.AWS_SESSION_TOKEN}}
           aws-region: us-east-1
 
-      - name: SSH Kkey
-        run: ssh -i ${{ secrets.PRIVATE_KEY }} ec2-user@ec2-34-237-145-140.compute-1.amazonaws.com
-
+      - name: executing remote ssh commands using ssh key
+        uses: appleboy/ssh-action@master
+        with:
+          host: ec2-34-237-145-140.compute-1.amazonaws.com
+          username:  ec2-user
+          key: ${{ secrets.PRIVATE_KEY }}
+          port: 22
+          script: whoami
