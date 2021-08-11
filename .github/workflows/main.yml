@@ -53,8 +53,7 @@ jobs:
           script: |
               ls
               git version
-              curl localhost:3000
               cd /etc/yum.repos.d/lecture-devops-app
-              ls
+              git version
               git pull
               sudo docker ps
