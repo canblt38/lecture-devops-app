@@ -55,5 +55,4 @@ jobs:
               git version
               cd /etc/yum.repos.d/lecture-devops-app
               git version
-              git pull
               sudo docker ps
