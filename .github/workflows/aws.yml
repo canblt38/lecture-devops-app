@@ -5,11 +5,9 @@ on:
     inputs:
       region:
         description: 'AWS Region'
-        required: true
         default: 'us-east-1d'
        keypair:
         description: 'SSH Key Pair'
-        required: true
 
 jobs:
   cluster:
