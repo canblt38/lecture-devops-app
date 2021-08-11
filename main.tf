@@ -47,6 +47,7 @@ resource "aws_instance" "app_server" {
     sudo systemctl daemon-reload
     sudo systemctl status mongod
     sudo yum install git -y
+    sudo mkdir test
     git clone https://github.com/canblt38/lecture-devops-app.git
     cd lecture-devops-app
     sudo docker build -t todoapp .
