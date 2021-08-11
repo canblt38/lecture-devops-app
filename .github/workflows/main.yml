@@ -55,7 +55,6 @@ jobs:
               git version
               curl localhost:3000
               cd /etc/yum.repos.d/lecture-devops-app
+              ls
               git pull
-              sudo kill todoapp
-              sudo docker build -t todoapp .
-              sudo docker run --network="host" -p 3000:3000 -d todoapp
+              sudo docker ps
