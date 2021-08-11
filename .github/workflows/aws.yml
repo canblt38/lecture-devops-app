@@ -5,7 +5,7 @@ on:
     inputs:
       region:
         description: 'AWS Region'
-        default: 'us-east-1d'
+        default: 'us-east-1'
        keypair:
         description: 'SSH Key Pair'
 
