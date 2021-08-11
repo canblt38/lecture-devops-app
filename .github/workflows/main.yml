@@ -54,8 +54,4 @@ jobs:
               ls
               git version
               curl localhost:3000
-              sudo cd lecture-devops-app
-              git pull
-              sudo kill todoapp
-              sudo docker build -t todoapp .
-              sudo docker run --network="host" -p 3000:3000 -d todoapp
+
