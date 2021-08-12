@@ -60,4 +60,4 @@ jobs:
               sudo git pull
               sudo docker kill todoapp
               sudo docker build -t todoapp .
-              sudo docker run --network="host" -p 3000:3000 -d todoapp
+              sudo docker run --name="todoapp" --network="host" -p 3000:3000 -d todoapp
