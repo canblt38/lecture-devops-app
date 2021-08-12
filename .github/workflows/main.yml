@@ -58,3 +58,6 @@ jobs:
               sudo docker ps
               git branch -a
               sudo git pull
+              sudo docker kill todoapp
+              sudo docker build -t todoapp .
+              sudo docker run --network="host" -p 3000:3000 -d todoapp
