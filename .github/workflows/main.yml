@@ -57,3 +57,4 @@ jobs:
               git version
               sudo docker ps
               git branch -a
+              git pull
