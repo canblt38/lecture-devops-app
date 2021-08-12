@@ -50,8 +50,10 @@ resource "aws_instance" "app_server" {
     sudo mkdir test
     git clone https://github.com/canblt38/lecture-devops-app.git
     cd lecture-devops-app
-    sudo docker build -t todoapp .
-    sudo docker run --name="todoapp" --network="host" -p 3000:3000 -d todoapp
+    imageName=xx:my-image
+    containerName=my-container
+    sudo docker build -t $imageName -f Dockerfile  .
+    sudo docker run  --network="host"  -d -p 3000:3000 --name $containerName $imageName
   EOF
 }
 
