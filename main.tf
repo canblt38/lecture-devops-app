@@ -72,12 +72,12 @@ resource "aws_security_group" "allow_ssh" {
   description = "Allow ssh inbound traffic"
 
   ingress {
-    description      = "ssh from VPC"
-    from_port        = 22
-    to_port          = 22
-    protocol         = "tcp"
-    cidr_blocks      = ["0.0.0.0/0"]
-  }
+        description      = "ssh from VPC"
+        from_port        = 22
+        to_port          = 22
+        protocol         = "tcp"
+        cidr_blocks      = ["0.0.0.0/0"]
+    }
 
   egress {
       from_port        = 0
@@ -97,3 +97,34 @@ resource "aws_security_group_rule" "port-tcp" {
   cidr_blocks       = ["0.0.0.0/0"]
   security_group_id = "sg-0a581cb7401eed5f0"
 }
+
+resource "aws_route53_zone" "easy_aws" {
+    name ="easyaws.de"
+    tags = {
+        Enverioment="dev"
+    }
+}
+
+resource "aws_route53_record" "www" {
+
+  zone_id = aws_route53_zone.easy_aws.zone_id
+  name    = "easyaws.de"
+  type    = "A"
+  ttl     = "300"
+  records = [aws_eip.eip.public_ip]
+}
+
+output "name_server" {
+  value = aws_route53_zone.easy_aws.name_servers
+}
+
+resource "aws_eip" "eip" {
+  instance = aws_instance.app_server.id
+  vpc = true
+}
+
+output "public_ip" {
+  value= aws_instance.app_server.public_ip
+}
+
+
