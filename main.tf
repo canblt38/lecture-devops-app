@@ -18,9 +18,9 @@ terraform {
 
 provider "aws" {
   region  = "us-east-1"
-    access_key = "ASIAYUOZXJF44SB3TQ5W"
-    secret_key = "1e0yZlICJeastSnFmVNlQ+p5UIZlS/p4zTVl9dPV"
-    token = "FwoGZXIvYXdzEBYaDKEqZSCkHyQ6SabVlCLKAd1SXAfVHtJHpS7NR/E9hh1lPyi2npAGWKtik7/qMlRxfbffhRUPdM6BU3sklr7Yk7HLMOWzJGfk61jLsIUNqMaHU8osRi24kch92mS9MQrfadMcZIlfRS1185xP3qLzUSOxD09DZWiTy7Yx3A10jq04t0hbKfKzWkeYQmb5RZruQfbm8uFHoNHgWQcOyhDex/OO6WWEBD1tWnIlZKkCwzQ/tkl12PSt7/x3qQl1H5+btXQeIZTVDGoVM6TLep7te1u6cUcWSee/7B8o7PHeiAYyLdrjASe9I8iTuUO3k0dkKsUI3+vdMZSfEswmCyTwftzUYo60MpHHuLP7low9Kw=="
+    access_key = "ASIAYUOZXJF4QXUOU57K"
+    secret_key = "KvJkWCc347dwoP/tHfN4QFcvDAcLt5TBF0S46sZC"
+    token = "FwoGZXIvYXdzEDMaDPSaMQtmXVYI3L+q9yLKAS/unlQ4A0N7y7ooNh11siwxtb4w/IURBfyKX//1Ga1ovJSZtR6K3vX2v5Gp84/i9EgYP+6uMGm8+QCaxKiZ5Nwdp4HMe6shvTuZS8ALcHzG0FwMDu+WhLcR8RqGyj7XlFGbG56IHA3X/xJWFoP1ECoa6+4Vj4jshIHM47EamEfM49R1s+ZOoaeDagGdOSQ/ycvtH1orHXWXwjv1DTPZL+Tdj6ro2emA5Ixa9yEwAqhi4Tgii6EHaX3y6BIo60d0tEhwCB8ILJeB+48o9JjliAYyLVRvG1teVdnUX6ftbXvWBJxtB4PNMjmjPZ2nhVWBVjFcOyriE1zodyIusc3JxQ=="
 }
 
 resource "aws_key_pair" "deployer" {
@@ -109,6 +109,8 @@ resource "aws_launch_configuration" "custom-launch-config" {
     #!/bin/bash
     set -ex
     sudo yum update -y
+    sudo amazon-linux-extras install epel -y
+    sudo yum install stress -y
     sudo yum install docker -y
     sudo service docker start
     sudo usermod -a -G docker ec2-user
@@ -150,7 +152,7 @@ resource "aws_autoscaling_policy" "custom-cpu-policy" {
   name = "custom-cpu-policy"
   autoscaling_group_name = aws_autoscaling_group.custom-group-autoscaling.name
   adjustment_type = "ChangeInCapacity"
-  scaling_adjustment = 3
+  scaling_adjustment = 1
   cooldown = 60
   policy_type = "SimpleScaling"
 }
@@ -167,10 +169,36 @@ resource "aws_cloudwatch_metric_alarm" "custom-cpu-alarm" {
   threshold = 20
 
   dimensions = {
-      AutoscalingGroudName = aws_autoscaling_group.custom-group-autoscaling.name
+      AutoScalingGroupName = aws_autoscaling_group.custom-group-autoscaling.name
   }
   actions_enabled = true
   alarm_actions = [aws_autoscaling_policy.custom-cpu-policy.arn]
 }
 
+resource "aws_autoscaling_policy" "custom-cpu-policy-scaledown" {
+  name = "custom-cpu-policy-scaledown"
+  autoscaling_group_name = aws_autoscaling_group.custom-group-autoscaling.name
+  adjustment_type = "ChangeInCapacity"
+  scaling_adjustment = -1
+  cooldown = 60
+  policy_type = "SimpleScaling"
+}
+
+resource "aws_cloudwatch_metric_alarm" "custom-cpu-alarm-scaledown" {
+  alarm_name = "custom-cpu-alarm-scaledown"
+  alarm_description = "alarm once cpu usage increses"
+  comparison_operator = "GreaterThanOrEqualToThreshold"
+  evaluation_periods = 2
+  metric_name = "CPUUtilization"
+  namespace = "AWS/EC2"
+  period = 120
+  statistic = "Average"
+  threshold = 10
+
+  dimensions = {
+      AutoscalingGroudName = aws_autoscaling_group.custom-group-autoscaling.name
+  }
+  actions_enabled = true
+  alarm_actions = [aws_autoscaling_policy.custom-cpu-policy.arn]
+}
 
