@@ -18,9 +18,9 @@ terraform {
 
 provider "aws" {
   region  = "us-east-1"
-    access_key = "ASIAYUOZXJF4QXUOU57K"
-    secret_key = "KvJkWCc347dwoP/tHfN4QFcvDAcLt5TBF0S46sZC"
-    token = "FwoGZXIvYXdzEDMaDPSaMQtmXVYI3L+q9yLKAS/unlQ4A0N7y7ooNh11siwxtb4w/IURBfyKX//1Ga1ovJSZtR6K3vX2v5Gp84/i9EgYP+6uMGm8+QCaxKiZ5Nwdp4HMe6shvTuZS8ALcHzG0FwMDu+WhLcR8RqGyj7XlFGbG56IHA3X/xJWFoP1ECoa6+4Vj4jshIHM47EamEfM49R1s+ZOoaeDagGdOSQ/ycvtH1orHXWXwjv1DTPZL+Tdj6ro2emA5Ixa9yEwAqhi4Tgii6EHaX3y6BIo60d0tEhwCB8ILJeB+48o9JjliAYyLVRvG1teVdnUX6ftbXvWBJxtB4PNMjmjPZ2nhVWBVjFcOyriE1zodyIusc3JxQ=="
+    access_key = "ASIAYUOZXJF4YZSRJAN5"
+    secret_key = "ItTOyGezyX3NlF0Eg6ey9RqUMQsmeoEo3Wk37A5q"
+    token = "FwoGZXIvYXdzEGUaDCKB1FNmjzfd9YwkgiLKAZbDqZOKVepOd5+XXHGoMWedCgz2jhAUGMbvqkMYvePeyUDCEEaSpzXrZuvwOY+KanjeHZElAW0sIx9miOn4WWpqmMXdmLK+DcecpOtviDfkww5AR6s+ueiAPLibqTVwmXQygw1a39/HbLgjTpw3uja+0j9NmHYd2RQjfxHXBD5nfGoVhULoMzB3DBTx4y7tUAjD7mYZDkSlJytjuzqiU/ZdbrleHNZXFSGGSeMypYMZGKUO14lVTRnlR82qWxayI/jgJreU9SRuXhsoupjwiAYyLVFyvoOE+LuEsS7BxudHisLmiHGVqGOVksBqom1v5HjdKhn8eTCDTf8F6BdxYQ=="
 }
 
 resource "aws_key_pair" "deployer" {
@@ -33,9 +33,33 @@ resource "aws_key_pair" "deployer" {
   value       = aws_instance.app_server.public_ip
 } */
 
-resource "aws_security_group" "allow_ssh" {
-  name        = "allow_ssh"
+# security group for instances
+resource "aws_security_group" "custom-instance-sg" {
+  vpc_id = aws_vpc.custom-vpc.id
+  name        = "custom-instance-sg"
   description = "Allow ssh inbound traffic"
+
+  ingress {
+        description      = "ssh from VPC"
+        from_port        = 22
+        to_port          = 22
+        protocol         = "tcp"
+        cidr_blocks      = ["0.0.0.0/0"]
+        security_groups = [aws_security_group.custom-elb-sg.id]
+    }
+
+  egress {
+      from_port        = 0
+      to_port          = 0
+      protocol         = "-1"
+      cidr_blocks      = ["0.0.0.0/0"]
+    }
+}
+# security group for aws elb
+resource "aws_security_group" "custom-elb-sg" {
+  vpc_id = aws_vpc.custom-vpc.id
+  name        = "custom-elb-sg"
+  description = "security group for ELB"
 
   ingress {
         description      = "ssh from VPC"
@@ -50,21 +74,21 @@ resource "aws_security_group" "allow_ssh" {
       to_port          = 0
       protocol         = "-1"
       cidr_blocks      = ["0.0.0.0/0"]
-      ipv6_cidr_blocks = ["::/0"]
     }
 
+    tags = {
+      Name= "custom-elb-sg"
+    }
 }
+
 resource "aws_security_group_rule" "port-tcp" {
   type              = "ingress"
-  from_port         = 2998
-  depends_on = [
-    aws_security_group.allow_ssh
-  ]
-  to_port           = 3001
+  from_port         = 3000
+  to_port           = 3000
   description       = "open tcp test"
   protocol          = "tcp"
   cidr_blocks       = ["0.0.0.0/0"]
-  security_group_id = "sg-0a581cb7401eed5f0"
+  security_group_id = aws_security_group.custom-elb-sg.id
 }
 
 /* resource "aws_route53_zone" "easy_aws" {
@@ -103,7 +127,7 @@ resource "aws_launch_configuration" "custom-launch-config" {
   image_id = "ami-0c2b8ca1dad447f8a"
   instance_type = "t2.micro"
   key_name = aws_key_pair.deployer.key_name
-  security_groups   = [aws_security_group.allow_ssh.id]
+  security_groups   = [aws_security_group.custom-instance-sg.id]
 
      user_data = <<-EOF
     #!/bin/bash
@@ -133,12 +157,13 @@ resource "aws_launch_configuration" "custom-launch-config" {
 
 resource "aws_autoscaling_group" "custom-group-autoscaling" {
     name = "custom-group-autoscaling"
-    vpc_zone_identifier = [ "subnet-ad474ce0" ]
+    vpc_zone_identifier = [ aws_subnet.customvpc-public-1.id,aws_subnet.customvpc-public-2.id ]
     launch_configuration = aws_launch_configuration.custom-launch-config.name
     min_size = 1
     max_size = 3
     health_check_grace_period = 100
     health_check_type = "EC2"
+    load_balancers = [aws_elb.custom-elb.name]
     force_delete = true
 
     tag {
@@ -202,3 +227,69 @@ resource "aws_cloudwatch_metric_alarm" "custom-cpu-alarm-scaledown" {
   alarm_actions = [aws_autoscaling_policy.custom-cpu-policy.arn]
 }
 
+
+# AWS ELB config
+resource "aws_elb" "custom-elb" {
+  name               = "custom-elb"
+  subnets = [aws_subnet.customvpc-public-1.id,aws_subnet.customvpc-public-2.id]
+  security_groups   = [aws_security_group.custom-elb-sg.id]
+  internal = true
+
+  listener {
+    instance_port     = 22
+    instance_protocol = "http"
+    lb_port           = 22
+    lb_protocol       = "http"
+  }
+
+  health_check {
+    healthy_threshold   = 2
+    unhealthy_threshold = 2
+    timeout             = 3
+    target              = "TCP:22"
+    interval            = 30
+  }
+
+  cross_zone_load_balancing   = true
+  idle_timeout                = 400
+  connection_draining         = true
+  connection_draining_timeout = 400
+
+  tags = {
+    Name = "custom-elb"
+  }
+}
+
+# create AWS VPC
+resource "aws_vpc" "custom-vpc" {
+  cidr_block = "172.31.0.0/16"
+  instance_tenancy = "default"
+  enable_dns_support = true
+  enable_dns_hostnames = true
+  enable_classiclink = true
+
+  tags = {
+    "Name" = "custom-vpc"
+  }
+}
+
+# public subnets in the vpc
+resource "aws_subnet" "customvpc-public-1" {
+  vpc_id = aws_vpc.custom-vpc.id
+  cidr_block = "172.31.16.0/20"
+  map_public_ip_on_launch = true
+  availability_zone = "us-east-1b"
+  tags = {
+    "Name" = "customvpc-public-1"
+  }
+}
+
+resource "aws_subnet" "customvpc-public-2" {
+  vpc_id = aws_vpc.custom-vpc.id
+  cidr_block = "172.31.32.0/20"
+  map_public_ip_on_launch = true
+  availability_zone = "us-east-1c"
+  tags = {
+    "Name" = "customvpc-public-1"
+  }
+}
