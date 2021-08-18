@@ -18,9 +18,9 @@ terraform {
 
 provider "aws" {
   region  = "us-east-1"
-    access_key = "ASIAYUOZXJF4YZSRJAN5"
-    secret_key = "ItTOyGezyX3NlF0Eg6ey9RqUMQsmeoEo3Wk37A5q"
-    token = "FwoGZXIvYXdzEGUaDCKB1FNmjzfd9YwkgiLKAZbDqZOKVepOd5+XXHGoMWedCgz2jhAUGMbvqkMYvePeyUDCEEaSpzXrZuvwOY+KanjeHZElAW0sIx9miOn4WWpqmMXdmLK+DcecpOtviDfkww5AR6s+ueiAPLibqTVwmXQygw1a39/HbLgjTpw3uja+0j9NmHYd2RQjfxHXBD5nfGoVhULoMzB3DBTx4y7tUAjD7mYZDkSlJytjuzqiU/ZdbrleHNZXFSGGSeMypYMZGKUO14lVTRnlR82qWxayI/jgJreU9SRuXhsoupjwiAYyLVFyvoOE+LuEsS7BxudHisLmiHGVqGOVksBqom1v5HjdKhn8eTCDTf8F6BdxYQ=="
+    access_key = "ASIAYUOZXJF45LEGJE4G"
+    secret_key = "KW3pYq+Fb/vUne9T8T2VAkBra34K98wzM+8hZXIV"
+    token = "FwoGZXIvYXdzEHQaDH6c9OYUXqgSe0ZoACLKAZ3vof0Ir4qVbSviegWaVke24VTvhYq2mIRd8nn5R0QbTD4TGEAktX0REH0OVGSOuAzjslA6s5ftU9eBnlRyFoUtpTviNXpJ0WLEOczIPdFuxd+uDV38ZSdydCouB7iVcrJTLDrOlfcGXdTwLREZWOmtIfjr+LNWCpEF82ZeRyyknI5u4KG3WJtTLzoFmx8yOjvcsAQSyHtNsvDplJpbznV7Ad2mXpihwN+iAooKwFx12UdA/j68BRI6PbiSeEnY3o6d7vJJ4WMzLLko/rnziAYyLYogq0lwZglGAez98T323BmyJLH8inMxnHupKQ0JGY9wrXzIEiDInlkeKK842Q=="
 }
 
 resource "aws_key_pair" "deployer" {
@@ -88,7 +88,7 @@ resource "aws_security_group_rule" "port-tcp" {
   description       = "open tcp test"
   protocol          = "tcp"
   cidr_blocks       = ["0.0.0.0/0"]
-  security_group_id = aws_security_group.custom-elb-sg.id
+  security_group_id = aws_security_group.custom-instance-sg.id
 }
 
 /* resource "aws_route53_zone" "easy_aws" {
@@ -292,4 +292,77 @@ resource "aws_subnet" "customvpc-public-2" {
   tags = {
     "Name" = "customvpc-public-1"
   }
+}
+
+resource "aws_internet_gateway" "customvpc-ig" {
+  vpc_id = aws_vpc.custom-vpc.id
+
+  tags = {
+      Name ="customvpc-ig"
+  }
+}
+
+resource "aws_route_table" "customvpc-r" {
+    vpc_id = aws_vpc.custom-vpc.id
+
+    route {
+          cidr_block = "0.0.0.0/0"
+          gateway_id = aws_internet_gateway.customvpc-ig.id
+    }
+
+     tags = {
+      Name ="customvpc-r"
+  }
+}
+
+resource "aws_route_table_association" "customvpc-public-1-a" {
+  subnet_id = aws_subnet.customvpc-public-1.id
+  route_table_id = aws_route_table.customvpc-r.id
+}
+
+resource "aws_route_table_association" "customvpc-public-2-a" {
+  subnet_id = aws_subnet.customvpc-public-2.id
+  route_table_id = aws_route_table.customvpc-r.id
+}
+
+# mongo db für die ec2 instanzen
+
+resource "aws_instance" "mongo" {
+  ami = "ami-0c2b8ca1dad447f8a"
+  instance_type = "t2.micro"
+  key_name = aws_key_pair.deployer.key_name
+
+    user_data = <<-EOF
+    #!/bin/bash
+    set -ex
+    sudo yum update -y
+    sudo amazon-linux-extras install epel -y
+    sudo yum install docker -y
+    sudo service docker start
+    sudo usermod -a -G docker ec2-user
+    sudo docker run --name mongo-for-instances -d mongo:latest
+  EOF
+}
+
+output "public_ip" {
+    // 172.17.0.2
+  value= aws_instance.mongo.public_ip
+}
+
+resource "aws_security_group_rule" "http-connection" {
+  type              = "ingress"
+  from_port         = 0
+  to_port           = 65535
+  protocol          = "tcp"
+  cidr_blocks       = ["0.0.0.0/0"]
+  security_group_id = "sg-cd9a44ca"
+}
+
+resource "aws_security_group_rule" "ssh-connection" {
+  type              = "ingress"
+  from_port         = 22
+  to_port           = 22
+  protocol          = "tcp"
+  cidr_blocks       = ["0.0.0.0/0"]
+  security_group_id = "sg-cd9a44ca"
 }
