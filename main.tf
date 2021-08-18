@@ -28,10 +28,55 @@ resource "aws_key_pair" "deployer" {
   public_key = "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQC34wEs0VITQvGRysbtzS1bDm65qIcJmhHWWvsdIvMHYAvaII6QMA5Nisbp+1pOm66XiQN516cTTfqZhlAcJnNLc2FgiUlzhv7gh28+QNYspyOjQb48F3CXs5jqAi3v+/m+f1rUnGFF6wufV3k+Rb58uF/Srwzb1XuzzQp2MEgnfX/6S7t1afIpVVBACEjndYbWViwNiFSmAT/eMsBBbT0eGJx+ZDMZFWEUkW0zzZbnXWaOmUaKgfcZL714z64v6fjcja8tnIrOJJU1PIY56COzIA2pEIqrWOPwbRlg0gv8E9+WHoFlyV+d11QzwVB+ds2/s4JbUzkgas4rhrqEpcdN can@DESKTOP-I4736MD"
 }
 
-/* output "instance_public_ip" {
+output "mongo_public_ip" {
   description = "Public IP address of the EC2 instance"
-  value       = aws_instance.app_server.public_ip
-} */
+  value       = aws_instance.mongo.public_ip
+}
+
+resource "aws_instance" "mongo" {
+  ami = "ami-0c2b8ca1dad447f8a"
+  instance_type = "t2.micro"
+  key_name = aws_key_pair.deployer.key_name
+
+    user_data = <<-EOF
+    #!/bin/bash
+    set -ex
+    sudo yum update -y
+    sudo amazon-linux-extras install epel -y
+    sudo yum install docker -y
+    sudo service docker start
+    sudo usermod -a -G docker ec2-user
+    cd /etc/yum.repos.d/
+    sudo bash -c "echo -e \"[mongodb-org-5.0]\nname=MongoDB Repository\nbaseurl=https://repo.mongodb.org/yum/amazon/2/mongodb-org/5.0/x86_64/\ngpgcheck=1\nenabled=1\ngpgkey=https://www.mongodb.org/static/pgp/server-5.0.asc\" >> mongodb-org-5.0.repo"
+    sudo yum install -y mongodb-org
+    sudo systemctl start mongod
+    sudo systemctl daemon-reload
+    sudo systemctl status mongod
+  EOF
+}
+
+/* output "public_ip" {
+    // 172.17.0.2
+  value= aws_instance.mongo.public_ip
+}
+ */
+resource "aws_security_group_rule" "http-connection" {
+  type              = "ingress"
+  from_port         = 0
+  to_port           = 65535
+  protocol          = "tcp"
+  cidr_blocks       = ["0.0.0.0/0"]
+  security_group_id = "sg-cd9a44ca"
+}
+
+resource "aws_security_group_rule" "ssh-connection" {
+  type              = "ingress"
+  from_port         = 22
+  to_port           = 22
+  protocol          = "tcp"
+  cidr_blocks       = ["0.0.0.0/0"]
+  security_group_id = "sg-cd9a44ca"
+}
 
 # security group for instances
 resource "aws_security_group" "custom-instance-sg" {
@@ -138,20 +183,13 @@ resource "aws_launch_configuration" "custom-launch-config" {
     sudo yum install docker -y
     sudo service docker start
     sudo usermod -a -G docker ec2-user
-    cd /etc/yum.repos.d/
-    sudo bash -c "echo -e \"[mongodb-org-5.0]\nname=MongoDB Repository\nbaseurl=https://repo.mongodb.org/yum/amazon/2/mongodb-org/5.0/x86_64/\ngpgcheck=1\nenabled=1\ngpgkey=https://www.mongodb.org/static/pgp/server-5.0.asc\" >> mongodb-org-5.0.repo"
-    sudo yum install -y mongodb-org
-    sudo systemctl start mongod
-    sudo systemctl daemon-reload
-    sudo systemctl status mongod
     sudo yum install git -y
-    sudo mkdir test
     git clone https://github.com/canblt38/lecture-devops-app.git
     cd lecture-devops-app
-    imageName=xx:my-image
-    containerName=my-container
+    imageName=xx:my-image2
+    containerName=my-container2
     sudo docker build -t $imageName -f Dockerfile  .
-    sudo docker run  --network="host"  -d -p 3000:3000 --name $containerName $imageName
+    sudo docker run -e MONGODB_URL=mongodb://${aws_instance.mongo.public_ip}:27017/todo-app --network="host"  -d -p 3000:3000 --name $containerName $imageName
   EOF
 }
 
@@ -327,42 +365,3 @@ resource "aws_route_table_association" "customvpc-public-2-a" {
 
 # mongo db für die ec2 instanzen
 
-resource "aws_instance" "mongo" {
-  ami = "ami-0c2b8ca1dad447f8a"
-  instance_type = "t2.micro"
-  key_name = aws_key_pair.deployer.key_name
-
-    user_data = <<-EOF
-    #!/bin/bash
-    set -ex
-    sudo yum update -y
-    sudo amazon-linux-extras install epel -y
-    sudo yum install docker -y
-    sudo service docker start
-    sudo usermod -a -G docker ec2-user
-    sudo docker run --name mongo-for-instances -d mongo:latest
-  EOF
-}
-
-output "public_ip" {
-    // 172.17.0.2
-  value= aws_instance.mongo.public_ip
-}
-
-resource "aws_security_group_rule" "http-connection" {
-  type              = "ingress"
-  from_port         = 0
-  to_port           = 65535
-  protocol          = "tcp"
-  cidr_blocks       = ["0.0.0.0/0"]
-  security_group_id = "sg-cd9a44ca"
-}
-
-resource "aws_security_group_rule" "ssh-connection" {
-  type              = "ingress"
-  from_port         = 22
-  to_port           = 22
-  protocol          = "tcp"
-  cidr_blocks       = ["0.0.0.0/0"]
-  security_group_id = "sg-cd9a44ca"
-}

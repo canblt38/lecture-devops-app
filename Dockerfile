@@ -9,4 +9,4 @@ RUN BUILD_PATH=/app/server/public node ./scripts/build.js
 WORKDIR /app/server/src
 RUN npm install
 
-CMD PORT=3000 MONGODB_URL=mongodb://3.83.69.143:27017/todo-app JWT_SECRET=myjwtsecret node index.js
+CMD PORT=3000 JWT_SECRET=myjwtsecret node index.js
