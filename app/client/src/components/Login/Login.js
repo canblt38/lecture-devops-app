@@ -6,7 +6,7 @@ import { login } from '../../utils/APICalls'
 
 class Login extends Component {
     state = {
-        email: 'WARUMMMMMM@hotmail.de',
+        email: 'WARUMMsMMMM@hotmail.de',
         password: '1234567',
         invalidEmail: false,
         emptyPassword: false,
