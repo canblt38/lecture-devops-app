@@ -57,7 +57,7 @@ jobs:
               sudo git pull
               imageName=my-image
               containerName=my-container
-              sudo docker build -t $imageName -f Dockerfile  .
+              sudo docker --no-cache build -t $imageName -f Dockerfile  .
               sudo docker rm -f $containerName
               sudo docker run -e MONGODB_URL=mongodb://${{secrets.MONGO_INSTANCE_IP}}:27017/todo-app --network="host"  -d -p 3000:3000 --name $containerName $imageName
 
