@@ -18,9 +18,9 @@ terraform {
 
 provider "aws" {
   region  = "us-east-1"
-    access_key = "ASIAYUOZXJF45LEGJE4G"
-    secret_key = "KW3pYq+Fb/vUne9T8T2VAkBra34K98wzM+8hZXIV"
-    token = "FwoGZXIvYXdzEHQaDH6c9OYUXqgSe0ZoACLKAZ3vof0Ir4qVbSviegWaVke24VTvhYq2mIRd8nn5R0QbTD4TGEAktX0REH0OVGSOuAzjslA6s5ftU9eBnlRyFoUtpTviNXpJ0WLEOczIPdFuxd+uDV38ZSdydCouB7iVcrJTLDrOlfcGXdTwLREZWOmtIfjr+LNWCpEF82ZeRyyknI5u4KG3WJtTLzoFmx8yOjvcsAQSyHtNsvDplJpbznV7Ad2mXpihwN+iAooKwFx12UdA/j68BRI6PbiSeEnY3o6d7vJJ4WMzLLko/rnziAYyLYogq0lwZglGAez98T323BmyJLH8inMxnHupKQ0JGY9wrXzIEiDInlkeKK842Q=="
+    access_key = "ASIAYUOZXJF4Z7ZTBWOJ"
+    secret_key = "3cxy2IzVVFkvfXO7dnHnrzWnuWDnc7WijNo6MuMg"
+    token = "FwoGZXIvYXdzEIv//////////wEaDICh/MuozYDLUJkP2iLKAbb/ueDqonyamCh5+OKlZ4o2PdzVl2CioDhSiST8b7P4ppCjZJXz1RGnIUJS1lo1oU1C4oXGIjGnGo97vvwbI1K/9KgKdqPD8QNnNlajHPGx+4Mr5wI0VZ8hOYJSeu2TmVEmzKMh6P4d40mYujTyWkeLSm3waswnV5jhwEDbLhrw9kk2+JlgW6gHJReldck3/1S9BjcbUsSs3PD566rX/lLnXRpEHJaQKFmBU1+yZf+ASfJorX6cOEh18VtuVUZQ75iMhZuVl8K/77co+db4iAYyLWXw91vn6QNh8qPN/7ZsAHmvcKxs8K8iMHbJNORMO45i+cmCs+WmivzuH28AMA=="
 }
 
 resource "aws_key_pair" "deployer" {
@@ -46,20 +46,10 @@ resource "aws_instance" "mongo" {
     sudo yum install docker -y
     sudo service docker start
     sudo usermod -a -G docker ec2-user
-    cd /etc/yum.repos.d/
-    sudo bash -c "echo -e \"[mongodb-org-5.0]\nname=MongoDB Repository\nbaseurl=https://repo.mongodb.org/yum/amazon/2/mongodb-org/5.0/x86_64/\ngpgcheck=1\nenabled=1\ngpgkey=https://www.mongodb.org/static/pgp/server-5.0.asc\" >> mongodb-org-5.0.repo"
-    sudo yum install -y mongodb-org
-    sudo systemctl start mongod
-    sudo systemctl daemon-reload
-    sudo systemctl status mongod
+    sudo docker run --network="host" --name some-mongo -d mongo:latest
   EOF
 }
 
-/* output "public_ip" {
-    // 172.17.0.2
-  value= aws_instance.mongo.public_ip
-}
- */
 resource "aws_security_group_rule" "http-connection" {
   type              = "ingress"
   from_port         = 0
@@ -198,7 +188,7 @@ resource "aws_autoscaling_group" "custom-group-autoscaling" {
     vpc_zone_identifier = [ aws_subnet.customvpc-public-1.id,aws_subnet.customvpc-public-2.id ]
     launch_configuration = aws_launch_configuration.custom-launch-config.name
     min_size = 1
-    max_size = 3
+    max_size = 2
     health_check_grace_period = 100
     health_check_type = "EC2"
     load_balancers = [aws_elb.custom-elb.name]
@@ -237,34 +227,6 @@ resource "aws_cloudwatch_metric_alarm" "custom-cpu-alarm" {
   actions_enabled = true
   alarm_actions = [aws_autoscaling_policy.custom-cpu-policy.arn]
 }
-
-resource "aws_autoscaling_policy" "custom-cpu-policy-scaledown" {
-  name = "custom-cpu-policy-scaledown"
-  autoscaling_group_name = aws_autoscaling_group.custom-group-autoscaling.name
-  adjustment_type = "ChangeInCapacity"
-  scaling_adjustment = -1
-  cooldown = 60
-  policy_type = "SimpleScaling"
-}
-
-resource "aws_cloudwatch_metric_alarm" "custom-cpu-alarm-scaledown" {
-  alarm_name = "custom-cpu-alarm-scaledown"
-  alarm_description = "alarm once cpu usage increses"
-  comparison_operator = "GreaterThanOrEqualToThreshold"
-  evaluation_periods = 2
-  metric_name = "CPUUtilization"
-  namespace = "AWS/EC2"
-  period = 120
-  statistic = "Average"
-  threshold = 10
-
-  dimensions = {
-      AutoscalingGroudName = aws_autoscaling_group.custom-group-autoscaling.name
-  }
-  actions_enabled = true
-  alarm_actions = [aws_autoscaling_policy.custom-cpu-policy.arn]
-}
-
 
 # AWS ELB config
 resource "aws_elb" "custom-elb" {
