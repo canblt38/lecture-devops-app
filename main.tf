@@ -176,8 +176,8 @@ resource "aws_launch_configuration" "custom-launch-config" {
     sudo yum install git -y
     git clone https://github.com/canblt38/lecture-devops-app.git
     cd lecture-devops-app
-    imageName=xx:my-image2
-    containerName=my-container2
+    imageName=my-image
+    containerName=my-container
     sudo docker build -t $imageName -f Dockerfile  .
     sudo docker run -e MONGODB_URL=mongodb://${aws_instance.mongo.public_ip}:27017/todo-app --network="host"  -d -p 3000:3000 --name $containerName $imageName
   EOF

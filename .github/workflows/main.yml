@@ -55,7 +55,7 @@ jobs:
               cd ..
               cd lecture-devops-app
               sudo git pull
-              imageName=xx:my-image
+              imageName=my-image
               containerName=my-container
               sudo docker build -t $imageName -f Dockerfile  .
               sudo docker rm -f $containerName
@@ -73,7 +73,7 @@ jobs:
               cd ..
               cd lecture-devops-app
               sudo git pull
-              imageName=xx:my-image
+              imageName=my-image
               containerName=my-container
               sudo docker build -t $imageName -f Dockerfile  .
               sudo docker rm -f $containerName
