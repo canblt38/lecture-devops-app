@@ -59,7 +59,7 @@ jobs:
               containerName=my-container
               sudo docker build -t $imageName -f Dockerfile  .
               sudo docker rm -f $containerName
-              sudo docker run -e MONGODB_URL=mongodb://52.91.78.9:27017/todo-app --network="host"  -d -p 3000:3000 --name $containerName $imageName
+              sudo docker run -e MONGODB_URL=mongodb://${{secrets.MONGO_INSTANCE_IP}}:27017/todo-app --network="host"  -d -p 3000:3000 --name $containerName $imageName
 
       - name: deploy new update instance 2
         uses: appleboy/ssh-action@master
@@ -73,8 +73,8 @@ jobs:
               cd ..
               cd lecture-devops-app
               sudo git pull
-              imageName=xx:my-image
-              containerName=my-container
-              sudo docker build -t $imageName -f Dockerfile  .
-              sudo docker rm -f $containerName
-              sudo docker run -e MONGODB_URL=mongodb://52.91.78.9:27017/todo-app --network="host"  -d -p 3000:3000 --name $containerName $imageName
+              imageName=xx:my-image2
+              containerName=my-container2
+              sudo docker build -t $imageName2 -f Dockerfile  .
+              sudo docker rm -f $containerName2
+              sudo docker run -e MONGODB_URL=mongodb://${{secrets.MONGO_INSTANCE_IP}}:27017/todo-app --network="host"  -d -p 3000:3000 --name $containerName2 $imageName2
