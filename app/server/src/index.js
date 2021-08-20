@@ -48,9 +48,6 @@ app.use(userRoutes);
 app.use('/', express.static(path.join(__dirname, `../public`)));
 // IMPORTANT: Educational purpose only! Possibly exposes sensitive data.
 app.use(envRoute);
-// NOTE: must be last one, because is uses a wildcard (!) that behaves aa
-// fallback and catches everything else
-app.use(errorRoutes);
 
 
 // Create a custom histogram metric
@@ -65,7 +62,8 @@ const httpRequestTimer = new client.Histogram({
   register.registerMetric(httpRequestTimer);
 
 // Prometheus metrics route
-app.get('/metrics', async (req, res) => {
+const metricroute = express.Router()
+metricroute.get('/metrics', async (req, res) => {
     // Start the HTTP request timer, saving a reference to the returned method
     const end = httpRequestTimer.startTimer();
     // Save reference to the path so we can record it when ending the timer
@@ -77,6 +75,13 @@ app.get('/metrics', async (req, res) => {
     // End timer and add labels
     end({ route, code: res.statusCode, method: req.method });
   });
+
+  app.use(metricroute);
+
+
+// NOTE: must be last one, because is uses a wildcard (!) that behaves aa
+// fallback and catches everything else
+app.use(errorRoutes);
 
 
 (async function main(){
