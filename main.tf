@@ -18,9 +18,9 @@ terraform {
 
 provider "aws" {
   region  = "us-east-1"
-    access_key = "ASIAYUOZXJF4T7FSGHYE"
-    secret_key = "WP5Uwg0wAmNmVGcm14suxKNAnL5CoAVwE1lbkCcQ"
-    token = "FwoGZXIvYXdzEJD//////////wEaDPQBjE6ScRMUQXJLHiLKAY5uS4q8Be8ggBl1t2rpKx8/01sPQJmMP4lTfTSv3oNy7metNRsZ4iDCp0UUIXk9/ZOz9LSO7DbBf8YHUn5qRJvZhRwjud7R9lmcox6VUYEMPu1m9T2HlDLhxe/OYwxy2PJO9gqyKzqt16GM7uCWwABLQAKOTiDY8wx72GMLiM749rrN9BBRW072xe6KB0aEc1ck1yXVea6WrWnxmh6M1rxXcAe3Z8qWRbkqBr8JdckQzOa1AxqToUsh26foItMyXegIDNZcrlNDupcohcz5iAYyLc9BVr38L1V1mdAD8LIuGfKj9MQlna3PoqRAZUU0aGDzZ6g58YaPFmV4z0zTXg=="
+    access_key = "ASIAYUOZXJF4QTF4RHNG"
+    secret_key = "BhrXLT0VoCV6fDkkp4A9vatPpAvmCk6RYxqrzTeP"
+    token = "FwoGZXIvYXdzEKH//////////wEaDMt1+VfGzDlD7gcIqSLKAaouS0CJk3XauRWHdFCKlmerwc+qyOIbkGHrOmeZTQc236VoBvI6QlZMfmsYLE2BhUFua/0NfJlPayPInGRB4LwxF8e27fMsx1P+t8ezCJzZb4XgqUiximXV63tI5vLw9hseyYQrUrZzR7FlBkz7O/lRYn+sAqhHu8Lo2Nh4drmLsQxGt8KF6QDSC920vcEokXnE3NG9OSvrpbSQjU1t7QHtlLAB3BkvMZDnGR//ei8wS/L0ELrb0edjM45K3m+9PH9TGDm3s119yJEo+7b9iAYyLSW+wwOUfmuf0FfpCFo9SC5IPLsLnsoBkarKUME1J4LmSmMG0fYBkfS6dVeqlA=="
 }
 
 resource "aws_key_pair" "deployer" {
@@ -77,9 +77,8 @@ resource "aws_security_group" "custom-instance-sg" {
   ingress {
         description      = "ssh from VPC"
         from_port        = 22
-        to_port          = 22
+        to_port          = 3000
         protocol         = "tcp"
-        cidr_blocks      = ["0.0.0.0/0"]
         security_groups = [aws_security_group.custom-elb-sg.id]
     }
 
@@ -88,6 +87,10 @@ resource "aws_security_group" "custom-instance-sg" {
       to_port          = 0
       protocol         = "-1"
       cidr_blocks      = ["0.0.0.0/0"]
+    }
+
+    tags = {
+      Name= "custom-instance-sg"
     }
 }
 # security group for aws elb
@@ -98,8 +101,8 @@ resource "aws_security_group" "custom-elb-sg" {
 
   ingress {
         description      = "ssh from VPC"
-        from_port        = 22
-        to_port          = 22
+        from_port        = 80
+        to_port          = 80
         protocol         = "tcp"
         cidr_blocks      = ["0.0.0.0/0"]
     }
@@ -126,37 +129,6 @@ resource "aws_security_group_rule" "port-tcp" {
   security_group_id = aws_security_group.custom-instance-sg.id
 }
 
-/* resource "aws_route53_zone" "easy_aws" {
-    name ="easyaws.de"
-    tags = {
-        Enverioment="dev"
-    }
-}
-
-resource "aws_route53_record" "www" {
-
-  zone_id = aws_route53_zone.easy_aws.zone_id
-  name    = "easyaws.de"
-  type    = "A"
-  ttl     = "300"
-  records = [aws_eip.eip.public_ip]
-}
-
-output "name_server" {
-  value = aws_route53_zone.easy_aws.name_servers
-}
-
-resource "aws_eip" "eip" {
-  instance = aws_instance.app_server.id
-  vpc = true
-}
-
-output "public_ip" {
-  value= aws_instance.app_server.public_ip
-}
- */
-data "aws_availability_zones" "available" {}
-
 resource "aws_launch_configuration" "custom-launch-config" {
   name = "custom-launch-config"
   image_id = "ami-0c2b8ca1dad447f8a"
@@ -181,6 +153,11 @@ resource "aws_launch_configuration" "custom-launch-config" {
     sudo docker build -t $imageName -f Dockerfile  .
     sudo docker run -e MONGODB_URL=mongodb://${aws_instance.mongo.public_ip}:27017/todo-app --network="host"  -d -p 3000:3000 --name $containerName $imageName
   EOF
+
+  lifecycle {
+    create_before_destroy = true
+  }
+
 }
 
 resource "aws_autoscaling_group" "custom-group-autoscaling" {
@@ -233,12 +210,11 @@ resource "aws_elb" "custom-elb" {
   name               = "custom-elb"
   subnets = [aws_subnet.customvpc-public-1.id,aws_subnet.customvpc-public-2.id]
   security_groups   = [aws_security_group.custom-elb-sg.id]
-  internal = true
 
   listener {
-    instance_port     = 22
+    instance_port     = 3000
     instance_protocol = "http"
-    lb_port           = 22
+    lb_port           = 80
     lb_protocol       = "http"
   }
 
@@ -246,12 +222,11 @@ resource "aws_elb" "custom-elb" {
     healthy_threshold   = 2
     unhealthy_threshold = 2
     timeout             = 3
-    target              = "TCP:22"
+    target              = "HTTP:3000/"
     interval            = 30
   }
 
   cross_zone_load_balancing   = true
-  idle_timeout                = 400
   connection_draining         = true
   connection_draining_timeout = 400
 
@@ -262,7 +237,7 @@ resource "aws_elb" "custom-elb" {
 
 # create AWS VPC
 resource "aws_vpc" "custom-vpc" {
-  cidr_block = "172.31.0.0/16"
+  cidr_block = "10.0.0.0/16"
   instance_tenancy = "default"
   enable_dns_support = true
   enable_dns_hostnames = true
@@ -276,7 +251,7 @@ resource "aws_vpc" "custom-vpc" {
 # public subnets in the vpc
 resource "aws_subnet" "customvpc-public-1" {
   vpc_id = aws_vpc.custom-vpc.id
-  cidr_block = "172.31.16.0/20"
+  cidr_block = "10.0.2.0/24"
   map_public_ip_on_launch = true
   availability_zone = "us-east-1b"
   tags = {
@@ -286,11 +261,11 @@ resource "aws_subnet" "customvpc-public-1" {
 
 resource "aws_subnet" "customvpc-public-2" {
   vpc_id = aws_vpc.custom-vpc.id
-  cidr_block = "172.31.32.0/20"
+  cidr_block = "10.0.3.0/24"
   map_public_ip_on_launch = true
   availability_zone = "us-east-1c"
   tags = {
-    "Name" = "customvpc-public-1"
+    "Name" = "customvpc-public-2"
   }
 }
 
@@ -324,6 +299,4 @@ resource "aws_route_table_association" "customvpc-public-2-a" {
   subnet_id = aws_subnet.customvpc-public-2.id
   route_table_id = aws_route_table.customvpc-r.id
 }
-
-# mongo db für die ec2 instanzen
 
