@@ -76,7 +76,7 @@ resource "aws_security_group" "custom-instance-sg" {
 
   ingress {
         description      = "ssh from VPC"
-        from_port        = 3000
+        from_port        = 22
         to_port          = 3000
         protocol         = "tcp"
         security_groups = [aws_security_group.custom-elb-sg.id]
