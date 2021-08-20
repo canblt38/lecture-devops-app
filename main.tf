@@ -48,6 +48,10 @@ resource "aws_instance" "mongo" {
     sudo usermod -a -G docker ec2-user
     sudo docker run --network="host" --name some-mongo -d mongo:latest
   EOF
+
+  tags = {
+    "Name" = "MogoDB"
+  }
 }
 
 resource "aws_security_group_rule" "http-connection" {
