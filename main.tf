@@ -18,9 +18,9 @@ terraform {
 
 provider "aws" {
   region  = "us-east-1"
-    access_key = "ASIAYUOZXJF4URSZSFFX"
-    secret_key = "FwKR6/2bamV47JG9XXw2AvzaXXyjLXh2N3r2VCB9"
-    token = "FwoGZXIvYXdzEKT//////////wEaDPBs5Gjna54FdmTgFyLKAYFNzf86EFeftt238EM5DRLQTArme9wFXhe4MxcahNOZW/ya3r4cwOjMvVShPKVD8AneBTVmQbnvn2kLWFI/UbkxbNQoNen+9hhT+KPy0bUSDS7rz6aOilUU8e+ezR+BwAtaSXntQUozI7Uvf+P3XcgDt+FmQ+3yBxO1m80Snlj7hctVsQu5AdlaTn2DjYdFI467cFw3AfmZmjpfrXq3fVtYHdWPG3KbM1nLDtjYgAsDg3kKB1f8y5NKgSjl1ixCyQ3XefD7SaCH7yAo2oj+iAYyLQAAX3FE0XBEOh/xIGOAk4PU9R/uNzwzawYuNSii1et0Zk8P83VcS/uXSWl9+w=="
+    access_key = "ASIAYUOZXJF4VKGHUDYJ"
+    secret_key = "qJIwCiZw3/+r+Z0F0nok6WFvjttG1eLSAAJ2Ixey"
+    token = "FwoGZXIvYXdzEE8aDOI9Fd/HKQY2NFcsMiLKAeYNN4U940HRaf/6LrWzjrBZvgN9LYk7SRqRE7u1Dw5SGMCUsWgamvRCS+zg2yuDCHqYNMrr2bKk8oEet94F/z2PeNEOnIgmjSgyo9b70HXZd4PE9j7pE15UWre03GvEXehY65ihdK9mNRjCMCfeV9dYpxIqJf++9QGVabgQlNtCjdryVSw9k6zmA9fy42b0IXFZSJIiDjaDTcsqKf1q8zBZt1T8PZDuCeI1d5QTRuzEbOmZbCmZhxjo6yd4JCz4wWlsMI65f0sD294or9ujiQYyLcLzsR64LXzdBNGOvRGLIB0zP1xAn7L3xq8ClXD91uVgx1dLeIEdTb1OqFtF5A=="
 }
 
 resource "aws_key_pair" "deployer" {
@@ -80,8 +80,8 @@ resource "aws_security_group" "custom-instance-sg" {
 
   ingress {
         description      = "ssh from VPC"
-        from_port        = 22
-        to_port          = 3000
+        from_port        = 80
+        to_port          = 80
         protocol         = "tcp"
         security_groups = [aws_security_group.custom-elb-sg.id]
     }
@@ -113,12 +113,11 @@ resource "aws_security_group" "custom-elb-sg" {
 
   ingress {
         description      = "ssh from VPC"
-        from_port        = 80
-        to_port          = 80
+        from_port        = 443
+        to_port          = 443
         protocol         = "tcp"
         cidr_blocks      = ["0.0.0.0/0"]
     }
-
   egress {
       from_port        = 0
       to_port          = 0
@@ -226,8 +225,9 @@ resource "aws_elb" "custom-elb" {
   listener {
     instance_port     = 3000
     instance_protocol = "http"
-    lb_port           = 80
-    lb_protocol       = "http"
+    lb_port           = 443
+    lb_protocol       = "https"
+    ssl_certificate_id = aws_iam_server_certificate.test_cert.arn
   }
 
   health_check {
@@ -245,6 +245,13 @@ resource "aws_elb" "custom-elb" {
   tags = {
     Name = "custom-elb"
   }
+}
+
+// ssl certificate
+resource "aws_iam_server_certificate" "test_cert" {
+  name             = "todo-certificate"
+  certificate_body = file("./todocert.pem")
+  private_key      = file("./todo-key.pem")
 }
 
 # create AWS VPC
