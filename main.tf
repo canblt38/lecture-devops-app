@@ -1,4 +1,4 @@
-terraform {
+/* terraform {
     backend "remote" {
         organization = "SemesterabgabeDevOps"
 
@@ -14,13 +14,13 @@ terraform {
   }
 
   required_version = ">= 0.15.1"
-}
+} */
 
 provider "aws" {
   region  = "us-east-1"
-    access_key = "ASIAYUOZXJF4ZV3TUN5F"
-    secret_key = "c7LJa2i6Qy1YUhV/qH/Jx6hPdsHvbT+vLO/bGle3"
-    token = "FwoGZXIvYXdzEGwaDHC2Agd6mej3T5kSfCLKAVcuvO4cVRgxwFTllhIKeoEyODW9wAmr9W1CDVri0seUJKQsyAWYnbA2lkJT0Bf6TITLNLKx53lj6/dXLzkvA4SO/2NzO6L5DpOqScVN30ddjZoZiFfFb1SB05KHT9KA4cZjQwT88n850lz6TE/HG/+S4XmcX4NCjpfmLQoJUStXGoCXGYTsFieOXJ61VDArgDnVXvEys/ZzokprpimlSdiKHs3w/dJ2DtvfPc0/5bDQum20vtWzrxnAot5P7x+jX78EzXuRXkRE3zwoi5XiiQYyLcG7xYHPd+P+Oy7t+hgxAOnZt6+TttKYFF0kRUjGhevY2AlMsRtxBR/RiWyWqQ=="
+    access_key = "ASIAYUOZXJF4X4RMJSIU"
+    secret_key = "45hWMNiO0ft6onBVLuS3vSlhj+D+9kq0s4HhuIZS"
+    token = "FwoGZXIvYXdzELT//////////wEaDN3lk7eOjxde30itRiLKAamjYXoF+ynTM9cpMZerujRPrmNRdNHtN/xMqbQbvNG6Q5krkhVLgi0vQUwDQqZ/mhr1JePyxmK2x7ML7vwOn6uDpuYqEWb1Dpoos7D+1a3uBChkt/gPHJMg6tX3nT5sze1I2YiNw7qejt3lh5i9adhCNe/Hsj0ajegShpv1JTP9nOHiDQ11pxAIy4TrR2vVecmadVP96VBFsvqMK6sQVgT225iUjofFi0u8Ha32k0vQ/HExn+uYLbxZPQ5pEjlubOjpTSmi+xQNGy0o4ZDyiQYyLUnqKGukJVMs2zQ4dfO4R71tlSx90cmZj/UDUSTspZeJ2K+M5gtBQZemlZJ4Xg=="
 }
 
 resource "aws_key_pair" "deployer" {
