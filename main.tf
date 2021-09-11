@@ -1,21 +1,3 @@
-/* terraform {
-    backend "remote" {
-        organization = "SemesterabgabeDevOps"
-
-        workspaces {
-            name = "BulutDevOps"
-        }
-    }
-  required_providers {
-    aws = {
-      source  = "hashicorp/aws"
-      version = "~> 3.27"
-    }
-  }
-
-  required_version = ">= 0.15.1"
-} */
-
 provider "aws" {
   region  = "us-east-1"
     access_key = "ASIAYUOZXJF4X4RMJSIU"
@@ -94,6 +76,14 @@ resource "aws_security_group" "custom-instance-sg" {
         cidr_blocks       = ["0.0.0.0/0"]
     }
 
+    ingress {
+        description      = "ssh from VPC"
+        from_port        = 3000
+        to_port          = 3000
+        protocol         = "tcp"
+        cidr_blocks      = ["0.0.0.0/0"]
+    }
+
   egress {
       from_port        = 0
       to_port          = 0
@@ -130,7 +120,7 @@ resource "aws_security_group" "custom-elb-sg" {
     }
 }
 
-resource "aws_security_group_rule" "port-tcp" {
+/* resource "aws_security_group_rule" "port-tcp" {
   type              = "ingress"
   from_port         = 3000
   to_port           = 3000
@@ -138,7 +128,7 @@ resource "aws_security_group_rule" "port-tcp" {
   protocol          = "tcp"
   cidr_blocks       = ["0.0.0.0/0"]
   security_group_id = aws_security_group.custom-instance-sg.id
-}
+} */
 
 resource "aws_launch_configuration" "custom-launch-config" {
   name = "custom-launch-config"
