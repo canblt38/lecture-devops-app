@@ -16,6 +16,13 @@ required to change any existing code. Instead, you probably just want to add som
 file (e.g. `Dockerfile`).
 
 
+### Deployment und Status der Abnahme
+
+Um die Anwendung auf AWS zu deployen müssen die Credentianls in die Main.tf hinzugefügt werden. Anschließend erfolgt der Befehlt "terraform apply" um die App
+initinal aufzusetzen. Dabei wird automatisiert die Mongo DB und die EC2 Instanzen aufgesetzt und die Anwendung ist auf den DNS namen des Load Balancers über HTTPS durch
+das hinzufügen des SSL Zertifikates erreichbar. Um den DNS einzurichten muss nun ein manueller Schritt vorgenommen werden. Dabei wird der CNAME von dem Load Balancer auf der Seite Name.com als CNAME hinterlegt. Anschließend ist die TO-DO-APP unter der jeweils gewünschten Domain erreichbar. Um die TO-DO-APP auf eine neue Version upzugraden ist es zunächest nötig alle AWS Credentails innerhalb von GITHUB als Secrets zu hiterlegen. Zudem muss die IP der MongoDB Instanz und die Hostnamen der jeweiligen EC2, auf denen die TO-DO-APP läuft manuell hinterlegt werden. Dieser Schritt ist nur ein einziges mal nach der Initialen Aufsetzung der APP nötig. Die Zwei einigen Punkte die bei der Abnahme nicht vollständig erfüllt wurden, ist erstens das aufsetzen einer PROD und DEV Umgebung und zweitens die Verwendung von Prometeus und Grafana. Bei erstens wird lediglich jede Änderrung die innerhalb des Masters vorgenommen direkt auf PROD geschoben und somit Online gestellt. Eine DEV umgebung Fehlt. Bei der Verwenung von Prometheus ist lediglich die Schnittstelle der Metrics auf seitens der EC2 instancen verfügbar. Die Anbindung über eine neue EC2 instance, die die Verwaltung mittels Grafana tätigt und die Daten der EC2 Instancen der APP auswertet fehlt. Für die Tests der TO-DO-APP wurde eine Pull-Request erstellt.
+
+
 ### Getting started 
 
 For more information regarding the app, please take a look into its [README](./app/README.md).
